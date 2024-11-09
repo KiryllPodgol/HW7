@@ -6,12 +6,22 @@ public class SpawnTrigger : MonoBehaviour
 
     private void Start()
     {
-        // Автоматически находим FloorSpawner в сцене
-        floorSpawner = FindObjectOfType<FloorSpawner>();
 
-        if (floorSpawner == null)
+        Transform parentObject = transform.parent;
+
+        if (parentObject != null)
         {
-            Debug.LogError("FloorSpawner не найден в сцене! Пожалуйста, добавьте его.");
+
+            floorSpawner = parentObject.GetComponentInChildren<FloorSpawner>();
+
+            if (floorSpawner == null)
+            {
+                Debug.LogError("FloorSpawner не найден среди дочерних объектов родительского объекта!");
+            }
+        }
+        else
+        {
+            Debug.LogError("Родительский объект не найден!");
         }
     }
 
