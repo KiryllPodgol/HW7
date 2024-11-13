@@ -1,56 +1,91 @@
 using UnityEngine;
 
+[RequireComponent(typeof(AudioSource))]
 public class PlayerMovement : MonoBehaviour
 {
     public CharacterController characterController;
     public Transform cameraTransform;
     public float speedWalk = 6.0f;
     public float gravity = -9.81f;
-    public Light flashlight; // Ссылка на фонарик
+    public Light flashlight;
+
+    [Header("Audio Settings")]
+    public AudioSource source;
+    public AudioClip clip; // Аудиоклип для шагов
+
     private Vector3 velocity;
 
     void Start()
     {
         characterController = GetComponent<CharacterController>();
-
+     
 
         if (cameraTransform == null)
         {
             cameraTransform = Camera.main.transform;
         }
 
-        // Проверяем, назначен ли фонарик
         if (flashlight == null)
         {
             Debug.LogError("Flashlight is not assigned! Please assign a flashlight in the inspector.");
         }
         else
         {
-            flashlight.enabled = false; // Начинаем с выключенного фонарика
+            flashlight.enabled = false;
+        }
+
+        if (source == null)
+        {
+            Debug.LogError("Step AudioSource is not assigned! Please assign an AudioSource in the inspector.");
+        }
+
+        if (clip == null)
+        {
+            Debug.LogError("Step AudioClip is not assigned! Please assign an AudioClip in the inspector.");
+        }
+        else
+        {
+            source.clip = clip; // Устанавливаем клип в источник звука
+            source.loop = true; // Звук будет повторяться
         }
     }
 
-
     void Update()
     {
-        // Управление фонариком на клавишу F
         if (Input.GetKeyDown(KeyCode.F) && flashlight != null)
         {
-            flashlight.enabled = !flashlight.enabled; // Переключаем состояние фонарика
+            flashlight.enabled = !flashlight.enabled;
         }
-        // Получаем ввод от пользователя
+
         float x = Input.GetAxis("Horizontal");
         float z = Input.GetAxis("Vertical");
 
         // Определяем направление движения относительно ориентации камеры
         Vector3 moveDirection = cameraTransform.right * x + cameraTransform.forward * z;
-        moveDirection.y = 0; // Обнуляем влияние вертикальной оси
-        moveDirection.Normalize(); // Нормализуем направление, чтобы исключить ускорение по диагонали
+        moveDirection.y = 0;
+        moveDirection.Normalize();
 
-        // Двигаем персонажа
-        characterController.Move(moveDirection * speedWalk * Time.deltaTime);
+        // Логирование величины вектора движения
+        Debug.Log("Magnitude of moveDirection: " + moveDirection.magnitude);
 
-        // Применяем гравитацию
+        // Проверка, движется ли персонаж, и проигрывание звука шагов
+        if (moveDirection.magnitude > 0 && characterController.isGrounded)
+        {
+            // Двигаем персонажа
+            characterController.Move(moveDirection * speedWalk * Time.deltaTime);
+
+            // Воспроизводим звук, если персонаж начал движение
+            if (!source.isPlaying)
+            {
+                source.Play();
+            }
+        }
+        else
+        {
+            source.Stop(); // Останавливаем звук, если персонаж не двигается или не на земле
+        }
+
+        // Обработка гравитации
         if (!characterController.isGrounded)
         {
             velocity.y += gravity * Time.deltaTime;
@@ -59,7 +94,7 @@ public class PlayerMovement : MonoBehaviour
         {
             velocity.y = -2f;
         }
+
         characterController.Move(velocity * Time.deltaTime);
     }
 }
-
