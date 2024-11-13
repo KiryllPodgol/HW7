@@ -15,10 +15,12 @@ public class PlayerMovement : MonoBehaviour
 
     private Vector3 velocity;
 
+    private Vector3 previousPosition;
+
     void Start()
     {
         characterController = GetComponent<CharacterController>();
-     
+
 
         if (cameraTransform == null)
         {
@@ -66,23 +68,13 @@ public class PlayerMovement : MonoBehaviour
         moveDirection.Normalize();
 
         // Ћогирование величины вектора движени€
-        Debug.Log("Magnitude of moveDirection: " + moveDirection.magnitude);
+        //Debug.Log("Magnitude of moveDirection: " + moveDirection.magnitude);
 
         // ѕроверка, движетс€ ли персонаж, и проигрывание звука шагов
         if (moveDirection.magnitude > 0 && characterController.isGrounded)
         {
             // ƒвигаем персонажа
             characterController.Move(moveDirection * speedWalk * Time.deltaTime);
-
-            // ¬оспроизводим звук, если персонаж начал движение
-            if (!source.isPlaying)
-            {
-                source.Play();
-            }
-        }
-        else
-        {
-            source.Stop(); // ќстанавливаем звук, если персонаж не двигаетс€ или не на земле
         }
 
         // ќбработка гравитации
@@ -96,5 +88,32 @@ public class PlayerMovement : MonoBehaviour
         }
 
         characterController.Move(velocity * Time.deltaTime);
+
+        // ќпределение величины фактического перемещени€
+        float actualSpeed = 0;
+        if (previousPosition != null)
+        {
+            Vector3 movementVector = transform.position - previousPosition;
+            actualSpeed = movementVector.magnitude / Time.deltaTime;
+            Debug.Log("Position: prev = " + previousPosition + ", new = " + transform.position + "; Movement vector: " + movementVector + "; delta time: " + Time.deltaTime + "; Actual speed: " + actualSpeed);
+        }
+
+        // ¬оспроизводим звук, если персонаж начал движение
+        if (actualSpeed > speedWalk * 0.01)
+        {
+            if (!source.isPlaying)
+            {
+                source.Play();
+            }
+        }
+        else
+        {
+            if (source.isPlaying)
+            {
+                source.Stop();
+            }
+        }
+
+        previousPosition = transform.position;
     }
 }
